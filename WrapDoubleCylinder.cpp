@@ -1,6 +1,6 @@
-#include "WrapCylinder.hpp"
+#include "WrapDoubleCylinder.hpp"
 
-void WrapCylinder::compute()
+void WrapDoubleCylinder::compute()
 {
     Eigen::Vector3f OP = this->point_P - this->point_U;
     OP = OP / OP.norm();
@@ -54,50 +54,83 @@ void WrapCylinder::compute()
 
     Eigen::Vector3f H = this->M_V.transpose() * h + this->point_V;
     Eigen::Vector3f T = this->M_V.transpose() * t + this->point_V;
-    Eigen::Vector3f h0 = h;
+    Eigen::Vector3f H0 = H;
 
     for (int i = 0; i < 100; i++)
     {
-        Eigen::Vector3f pu = this->M_U * (this->point_P - this->point_V);
-        Eigen::Vector3f su = this->M_U * (this->point_S - this->point_V);
+        // step 2
+        Eigen::Vector3f pu = this->M_U * (this->point_P - this->point_U);
+        Eigen::Vector3f hu = this->M_U * (H - this->point_U);
 
-        float denom_h = pv(0)*pv(0) + pv(1)*pv(1);
-        float denom_t = sv(0)*sv(0) + sv(1)*sv(1);
-        float Rv = this->radius_V;
+        float denom_q = pu(0)*pu(0) + pu(1)*pu(1);
+        float denom_g = hu(0)*hu(0) + hu(1)*hu(1);
+        float Ru = this->radius_U;
         
+        float root_q = sqrt(denom_q - Ru*Ru);
+        float root_g = sqrt(denom_g - Ru*Ru);
+
+        Eigen::Vector3f q(0.0f, 0.0f, 0.0f);
+        Eigen::Vector3f g(0.0f, 0.0f, 0.0f);
+        q(0) = (pu(0) * Ru*Ru + Ru * pu(1) * root_q) / denom_q;
+        q(1) = (pu(1) * Ru*Ru - Ru * pu(0) * root_q) / denom_q;
+        g(0) = (hu(0) * Ru*Ru - Ru * hu(1) * root_g) / denom_g;
+        g(1) = (hu(1) * Ru*Ru + Ru * hu(0) * root_g) / denom_g;
+
+        float qg_xy = Ru * acos(1.0f - 0.5f *
+                                ((q(0) - g(0)) * (q(0) - g(0))
+                                 + (q(1) - g(1)) * (q(1) - g(1))) / (Ru*Ru));
+        float pq_xy = Ru * acos(1.0f - 0.5f *
+                                ((pu(0) - q(0)) * (pu(0) - q(0))
+                                 + (pu(1) - q(1)) * (pu(1) - q(1))) / (Ru*Ru));
+        float gh_xy = Ru * acos(1.0f - 0.5f *
+                                ((g(0) - hu(0)) * (g(0) - hu(0))
+                                 + (g(1) - hu(1)) * (g(1) - hu(1))) / (Ru*Ru));
+        q(2) = pu(2) + (hu(2)-pu(2)) * pq_xy / (pq_xy + qg_xy + gh_xy);
+        g(2) = hu(2) - (hu(2)-pu(2)) * gh_xy / (pq_xy + qg_xy + gh_xy);
+
+        Eigen::Vector3f Q = this->M_U.transpose() * q + this->point_U;
+        Eigen::Vector3f G = this->M_U.transpose() * g + this->point_U;
+        
+        // step 3
+        Eigen::Vector3f gv = this->M_V * (this->point_G - this->point_V);
+
+        float denom_h = gv(0)*gv(0) + gv(1)*gv(1);
         float root_h = sqrt(denom_h - Rv*Rv);
-        float root_t = sqrt(denom_t - Rv*Rv);
 
         Eigen::Vector3f h(0.0f, 0.0f, 0.0f);
-        Eigen::Vector3f t(0.0f, 0.0f, 0.0f);
-        h(0) = (pv(0) * Rv*Rv + Rv * pv(1) * root_h) / denom_h;
-        h(1) = (pv(1) * Rv*Rv - Rv * pv(0) * root_h) / denom_h;
-        t(0) = (sv(0) * Rv*Rv - Rv * sv(1) * root_t) / denom_t;
-        t(1) = (sv(1) * Rv*Rv + Rv * sv(0) * root_t) / denom_t;
-
-        this->status = wrap;
-
+        h(0) = (gv(0) * Rv*Rv + Rv * gv(1) * root_h) / denom_h;
+        h(1) = (gv(1) * Rv*Rv - Rv * gv(0) * root_h) / denom_h;
+        
         float ht_xy = Rv * acos(1.0f - 0.5f *
                                 ((h(0) - t(0)) * (h(0) - t(0))
                                  + (h(1) - t(1)) * (h(1) - t(1))) / (Rv*Rv));
-        float ph_xy = Rv * acos(1.0f - 0.5f *
-                                ((pv(0) - h(0)) * (pv(0) - h(0))
-                                 + (pv(1) - h(1)) * (pv(1) - h(1))) / (Rv*Rv));
+        float gh_xy = Rv * acos(1.0f - 0.5f *
+                                ((gv(0) - h(0)) * (gv(0) - h(0))
+                                 + (gv(1) - h(1)) * (gv(1) - h(1))) / (Rv*Rv));
         float ts_xy = Rv * acos(1.0f - 0.5f *
                                 ((t(0) - sv(0)) * (t(0) - sv(0))
                                  + (t(1) - sv(1)) * (t(1) - sv(1))) / (Rv*Rv));
-        h(2) = pv(2) + (sv(2)-pv(2)) * ph_xy / (ph_xy + ht_xy + ts_xy);
-        t(2) = sv(2) - (sv(2)-pv(2)) * ts_xy / (ph_xy + ht_xy + ts_xy);
+        h(2) = gv(2) + (sv(2)-gv(2)) * gh_xy / (gh_xy + ht_xy + ts_xy);
+        t(2) = sv(2) - (sv(2)-gv(2)) * ts_xy / (gh_xy + ht_xy + ts_xy);
 
         Eigen::Vector3f H = this->M_V.transpose() * h + this->point_V;
         Eigen::Vector3f T = this->M_V.transpose() * t + this->point_V;
-        Eigen::Vector3f h0 = h;
+
+        double dist = (H - H0).norm();
+        if (dist == 0) break;
+        
+        Eigen::Vector3f H0 = H;
     }
 
-    // std::cout << Q.transpose() << std::endl << T.transpose() << std::endl;
+    this->q = q;
+    this->g = g;
+    this->h = h;
+    this->t = t;
+    std::cout << Q.transpose() << std::endl << G.transpose() << std::endl
+              << H.transpose() << std::endl << T.transpose() << std::endl;
 }
 
-Eigen::MatrixXf WrapCylinder::getPoints(int num_points)
+Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
 {
     float theta_q = atan(this->point_q(1) / this->point_q(0));
     if (this->point_q(0) < 0.0f)
