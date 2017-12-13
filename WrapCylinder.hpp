@@ -35,7 +35,7 @@ public:
                  const Eigen::Vector3f &S, 
                  const Eigen::Vector3f &O, 
                  const Eigen::Vector3f &Z,
-                 const float R)
+                 const double R)
         : WrapObst(P, S, O, R), vec_z(Z)
     {
         type = cylinder;
