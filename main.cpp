@@ -28,14 +28,14 @@ int main()
     std::cout << wc.getPoints(10) << std::endl;
     */
     
-    WrapDoubleCylinder wdc(Eigen::Vector3f(-3.0f, 15.0f, 0.0f),
-                           Eigen::Vector3f(4.0f, 8.0f, 0.0f),
-                           Eigen::Vector3f(1.0f, 15.5f, -0.2f),
-                           Eigen::Vector3f(0.0f, 0.0f, -1.0f),
-                           0.4,
-                           Eigen::Vector3f(4.5f, 12.5f, -0.2f),
-                           Eigen::Vector3f(0.0f, 0.0f, 1.0f),
-                           0.4);
+    WrapDoubleCylinder wdc(Eigen::Vector3f(-4.0f, 2.0f, -2.0f),
+                           Eigen::Vector3f(5.0f, 10.0f, 3.0f),
+                           Eigen::Vector3f(0.0f, 0.0f, 0.0f),
+                           Eigen::Vector3f(0.0f, 1.0f, 0.0f),
+                           2,
+                           Eigen::Vector3f(4.0f, 6.0f, 3.0f),
+                           Eigen::Vector3f(1.0f, -2.0f, 1.0f),
+                           2);
     wdc.compute();
     std::cout << wdc.getLength() << std::endl;
     std::cout << wdc.getStatus() << std::endl;

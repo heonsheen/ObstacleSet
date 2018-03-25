@@ -161,11 +161,13 @@ void WrapDoubleCylinder::compute()
     this->point_g = g;
     this->point_h = h;
     this->point_t = t;
+
     /*
     std::cout << Q.transpose() << std::endl << G.transpose() << std::endl
               << H.transpose() << std::endl << T.transpose() << std::endl;
     */
 }
+
 
 Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
 {
@@ -264,3 +266,4 @@ Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
 
     return points;
 }
+
