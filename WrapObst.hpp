@@ -5,6 +5,8 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdlib.h>
+#include <complex>
 
 enum Status { wrap, inside_radius, no_wrap, empty };
 enum Type { none, sphere, cylinder, double_cylinder }; 
@@ -23,7 +25,7 @@ protected:
     Eigen::MatrixXf M;  // Obstacle Coord Transformation Matrix
     Status status;      // Wrapping Status
     Type type;          // Obstacle Type
-    float path_length,  // Wrapping Path Length
+    double path_length,  // Wrapping Path Length
           radius;       // obstacle sphere radius
 
 public:
@@ -55,7 +57,7 @@ public:
     WrapObst(const Eigen::Vector3f &P, 
              const Eigen::Vector3f &S, 
              const Eigen::Vector3f &O, 
-             const float R):
+             const double R):
         point_P(P), point_S(S), point_O(O), radius(R)
     {
         point_q = point_t = Eigen::Vector3f(0.0f, 0.0f, 0.f);
@@ -68,7 +70,7 @@ public:
     // wrap calculation
     void compute() {}
     
-    float getLength()
+    double getLength()
     {
         return this->path_length;
     }
@@ -78,7 +80,7 @@ public:
         return this->status;
     }
 
-    float getRadius()
+    double getRadius()
     {
         return this->radius;
     }

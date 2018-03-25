@@ -28,7 +28,7 @@ public:
     WrapSphere(const Eigen::Vector3f &P, 
                 const Eigen::Vector3f &S, 
                 const Eigen::Vector3f &O, 
-               const float R)
+               const double R)
         : WrapObst(P, S, O, R)
     {
         type = sphere;

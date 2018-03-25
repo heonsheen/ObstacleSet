@@ -31,7 +31,7 @@ private:
     
 public:
     // default constructor
-    WrapCylinder()
+    WrapDoubleCylinder()
     {
         vec_z_U = point_U = vec_z_V = point_V = point_g = point_h = 
             Eigen::Vector3f(0.0f, 0.0f, 0.0f);
@@ -50,14 +50,14 @@ public:
     }
 
     // constructor
-    WrapCylinder(const Eigen::Vector3f &P, 
-                 const Eigen::Vector3f &S,
-                 const Eigen::Vector3f &U, 
-                 const Eigen::Vector3f &Z_U,
-                 const float R_U,
-                 const Eigen::Vector3f &V,
-                 const Eigen::Vector3f &Z_V
-                 const float R_V)
+    WrapDoubleCylinder(const Eigen::Vector3f &P, 
+                       const Eigen::Vector3f &S,
+                       const Eigen::Vector3f &U, 
+                       const Eigen::Vector3f &Z_U,
+                       const float R_U,
+                       const Eigen::Vector3f &V,
+                       const Eigen::Vector3f &Z_V,
+                       const float R_V)
         : WrapObst(P, S, Eigen::Vector3f(0.0f, 0.0f, 0.0f), 0.0f), 
           point_U(U), vec_z_U(Z_U), radius_U(R_U),
           point_V(V), vec_z_V(Z_V), radius_V(R_V)
