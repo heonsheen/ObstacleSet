@@ -123,7 +123,7 @@ void WrapDoubleCylinder::compute()
         double denom_h = gv(0)*gv(0) + gv(1)*gv(1);
         double root_h = sqrt(denom_h - Rv*Rv);
 
-        Eigen::Vector3f h(0.0f, 0.0f, 0.0f);
+        h = Eigen::Vector3f(0.0f, 0.0f, 0.0f);
         h(0) = (gv(0) * Rv*Rv + Rv * gv(1) * root_h) / denom_h;
         h(1) = (gv(1) * Rv*Rv - Rv * gv(0) * root_h) / denom_h;
 
@@ -145,9 +145,9 @@ void WrapDoubleCylinder::compute()
         h(2) = gv(2) + (sv(2)-gv(2)) * gh_xy / (gh_xy + ht_xy + ts_xy);
         t(2) = sv(2) - (sv(2)-gv(2)) * ts_xy / (gh_xy + ht_xy + ts_xy);
 
-        Eigen::Vector3f H = this->M_V.transpose() * h + this->point_V;
-        Eigen::Vector3f T = this->M_V.transpose() * t + this->point_V;
-
+        H = this->M_V.transpose() * h + this->point_V;
+        T = this->M_V.transpose() * t + this->point_V;
+        
         len += (G - H).norm();
 
         double dist = (H - H0).norm();
@@ -161,7 +161,6 @@ void WrapDoubleCylinder::compute()
     this->point_g = g;
     this->point_h = h;
     this->point_t = t;
-
     /*
     std::cout << Q.transpose() << std::endl << G.transpose() << std::endl
               << H.transpose() << std::endl << T.transpose() << std::endl;
