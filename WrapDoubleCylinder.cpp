@@ -47,6 +47,13 @@ void WrapDoubleCylinder::compute()
     t(0) = (sv(0) * Rv*Rv - Rv * sv(1) * root_t) / denom_t;
     t(1) = (sv(1) * Rv*Rv + Rv * sv(0) * root_t) / denom_t;
 
+    if (Rv * (h(0) * t(1) - h(1) * t(0)) > 0.0f)
+    {
+        status_V = no_wrap;
+        h(0) = sv(0);
+        h(1) = sv(1);
+    }
+
     this->status = wrap;
 
     std::complex<double> ht_i = 1.0f - 0.5f *
@@ -76,12 +83,12 @@ void WrapDoubleCylinder::compute()
 
     double len = 0.0f;
 
+    Eigen::Vector3f pu = this->M_U * (this->point_P - this->point_U);
     for (int i = 0; i < 30; i++)
     {
         len = 0.0f;
 
         // step 2: compute Q and G
-        Eigen::Vector3f pu = this->M_U * (this->point_P - this->point_U);
         Eigen::Vector3f hu = this->M_U * (H - this->point_U);
 
         double denom_q = pu(0)*pu(0) + pu(1)*pu(1);
@@ -95,6 +102,13 @@ void WrapDoubleCylinder::compute()
         q(1) = (pu(1) * Ru*Ru - Ru * pu(0) * root_q) / denom_q;
         g(0) = (hu(0) * Ru*Ru - Ru * hu(1) * root_g) / denom_g;
         g(1) = (hu(1) * Ru*Ru + Ru * hu(0) * root_g) / denom_g;
+
+        if (Ru * (q(0) * g(1) - q(1) * g(0)) > 0.0f)
+        {
+            status_U = no_wrap;
+            g(0) = pu(0);
+            g(1) = pu(1);
+        }
 
         std::complex<double> qg_i = 1.0f - 0.5f *
             ((q(0) - g(0)) * (q(0) - g(0))
@@ -145,6 +159,13 @@ void WrapDoubleCylinder::compute()
         h(2) = gv(2) + (sv(2)-gv(2)) * gh_xy / (gh_xy + ht_xy + ts_xy);
         t(2) = sv(2) - (sv(2)-gv(2)) * ts_xy / (gh_xy + ht_xy + ts_xy);
 
+        if (Rv * (h(0) * t(1) - h(1) * t(0)) > 0.0f)
+        {
+            status_V = no_wrap;
+            h(0) = sv(0);
+            h(1) = sv(1);
+        }
+
         H = this->M_V.transpose() * h + this->point_V;
         T = this->M_V.transpose() * t + this->point_V;
         
@@ -156,11 +177,32 @@ void WrapDoubleCylinder::compute()
         H0 = H;
     }
 
+    if (status_V == no_wrap)
+    {
+        t = sv;
+        T = this->M_V.transpose() * t + this->point_V;
+    }
+    else
+    {
+        status_V = wrap;
+    }
+    
+    if (status_U == no_wrap)
+    {
+        q = pu;
+        Q = this->M_U.transpose() * q + this->point_U;
+    }
+    else
+    {
+        status_U = wrap;
+    }
+
     this->path_length = len;
     this->point_q = q;
     this->point_g = g;
     this->point_h = h;
     this->point_t = t;
+    
     /*
     std::cout << Q.transpose() << std::endl << G.transpose() << std::endl
               << H.transpose() << std::endl << T.transpose() << std::endl;
@@ -170,57 +212,75 @@ void WrapDoubleCylinder::compute()
 
 Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
 {
-    double theta_q = atan(this->point_q(1) / this->point_q(0));
+    int col = 0;
+    
+    double theta_s, theta_e, theta_q, theta_g, theta_h, theta_t;
+    double z_i, dz, z_s, z_e;
+
+    Eigen::MatrixXf points;
+
+    if (status_U == wrap && status_V == wrap)
+        points = Eigen::MatrixXf(3, 3 * num_points + 1);
+    else if (status_U == wrap || status_V == wrap)
+        points = Eigen::MatrixXf(3, 2 * num_points + 1);
+    else
+        points = Eigen::MatrixXf(3, 1 * num_points + 1);
+
+    theta_q = atan(this->point_q(1) / this->point_q(0));
     if (this->point_q(0) < 0.0f)
         theta_q += PI;
-    
-    double theta_g = atan(this->point_g(1) / this->point_g(0));
+        
+    theta_g = atan(this->point_g(1) / this->point_g(0));
     if (this->point_g(0) < 0.0f)
         theta_g += PI;
     
-    double theta_h = atan(this->point_h(1) / this->point_h(0));
+    theta_h = atan(this->point_h(1) / this->point_h(0));
     if (this->point_h(0) < 0.0f)
         theta_h += PI;
     
-    double theta_t = atan(this->point_t(1) / this->point_t(0));
+    theta_t = atan(this->point_t(1) / this->point_t(0));
     if (this->point_t(0) < 0.0f)
         theta_t += PI;
 
-    Eigen::MatrixXf points(3, 3* num_points + 1);
-    
-    double theta_s, theta_e, z_s, z_e;
-    
     // q to g
-    if (theta_q < theta_g)
+    if (status_U == wrap)
     {
-        theta_s = theta_q; theta_e = theta_g;
-        z_s = this->point_q(2); z_e = this->point_g(2);
+        if (theta_q < theta_g)
+        {
+            theta_s = theta_q; theta_e = theta_g;
+            z_s = this->point_q(2); z_e = this->point_g(2);
+        }
+        else
+        {
+            theta_s = theta_g; theta_e = theta_q;
+            z_s = this->point_g(2); z_e = this->point_q(2);
+        }
+
+        if (theta_e - theta_s > theta_s + 2*PI - theta_e)
+        {
+            double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2*PI;
+            tmp = z_s; z_s = z_e; z_e = tmp;
+        }
+
+        z_i = z_s;
+        dz = (z_e - z_s) / num_points;
+        for (double i = theta_s; i <= theta_e + 0.001; 
+             i += (theta_e - theta_s) / num_points)
+        {
+            Eigen::Vector3f point = this->M_U.transpose() *
+                Eigen::Vector3f(this->radius_U * cos(i), 
+                                this->radius_U * sin(i), z_i) +
+                this->point_U;
+            z_i += dz;
+            points.col(col++) = point;
+        }
     }
     else
     {
-        theta_s = theta_g; theta_e = theta_q;
-        z_s = this->point_g(2); z_e = this->point_q(2);
+        points.col(col++) = point_P;
     }
-
-    if (theta_e - theta_s > theta_s + 2*PI - theta_e)
-    {
-        double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2*PI;
-        tmp = z_s; z_s = z_e; z_e = tmp;
-    }
-
-    int col = 0;
-    double z_i = z_s, dz = (z_e - z_s) / num_points;
-    for (double i = theta_s; i <= theta_e + 0.001; 
-         i += (theta_e - theta_s) / num_points)
-    {
-        Eigen::Vector3f point = this->M_U.transpose() *
-            Eigen::Vector3f(this->radius_U * cos(i), 
-                            this->radius_U * sin(i), z_i) +
-            this->point_U;
-        z_i += dz;
-        points.col(col++) = point;
-    }
-
+    std::cout << col << std::endl;
+    
     // g to h
     Eigen::Vector3f G = this->M_U.transpose() * this->point_g + this->point_U;
     Eigen::Vector3f H = this->M_V.transpose() * this->point_h + this->point_V;
@@ -232,37 +292,44 @@ Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
         points.col(col++) = point;
     }
 
-    // h to t
-    if (theta_h < theta_t)
+    if (status_V == wrap)
     {
-        theta_s = theta_h; theta_e = theta_t;
-        z_s = this->point_h(2); z_e = this->point_t(2);
+        // h to t
+        if (theta_h < theta_t)
+        {
+            theta_s = theta_h; theta_e = theta_t;
+            z_s = this->point_h(2); z_e = this->point_t(2);
+        }
+        else
+        {
+            theta_s = theta_t; theta_e = theta_h;
+            z_s = this->point_t(2); z_e = this->point_h(2);
+        }
+
+        if (theta_e - theta_s > theta_s + 2*PI - theta_e)
+        {
+            double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2*PI;
+            tmp = z_s; z_s = z_e; z_e = tmp;
+        }
+
+        z_i = z_s;
+        dz = (z_e - z_s) / num_points;
+        for (double i = theta_s; i <= theta_e + 0.001; 
+             i += (theta_e - theta_s) / num_points)
+        {
+            Eigen::Vector3f point = this->M_V.transpose() *
+                Eigen::Vector3f(this->radius_V * cos(i), 
+                                this->radius_V * sin(i), z_i) +
+                this->point_V;
+            z_i += dz;
+            points.col(col++) = point;
+        }
     }
     else
     {
-        theta_s = theta_t; theta_e = theta_h;
-        z_s = this->point_t(2); z_e = this->point_h(2);
+        points.col(col++) = point_V;
     }
-
-    if (theta_e - theta_s > theta_s + 2*PI - theta_e)
-    {
-        double tmp = theta_s; theta_s = theta_e; theta_e = tmp + 2*PI;
-        tmp = z_s; z_s = z_e; z_e = tmp;
-    }
-
-    z_i = z_s;
-    dz = (z_e - z_s) / num_points;
-    for (double i = theta_s; i <= theta_e + 0.001; 
-         i += (theta_e - theta_s) / num_points)
-    {
-        Eigen::Vector3f point = this->M_V.transpose() *
-            Eigen::Vector3f(this->radius_V * cos(i), 
-                            this->radius_V * sin(i), z_i) +
-            this->point_V;
-        z_i += dz;
-        points.col(col++) = point;
-    }
-
+    
     return points;
 }
 

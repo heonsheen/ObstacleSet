@@ -44,7 +44,8 @@ void WrapCylinder::compute()
     std::complex<double> qt_i = 1.0f - 0.5f *
         ((q(0) - t(0)) * (q(0) - t(0))
          + (q(1) - t(1)) * (q(1) - t(1))) / (R*R);
-    double qt_xy = R * acos(qt_i);
+    std::complex<double> rqt = R * acos(qt_i);
+    double qt_xy = rqt.real();
     this->path_length = qt_xy;
 
     double pq_xy = sqrt((p(0)-q(0)) * (p(0)-q(0)) + 

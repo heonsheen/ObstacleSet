@@ -29,6 +29,10 @@ private:
         radius_U,     // U Cylinder Radius
         radius_V;     // V Cylinder Radius
     
+    Status 
+        status_U,     // U Wrapping Status
+        status_V;     // V Wrapping Status
+
 public:
     // default constructor
     WrapDoubleCylinder()
@@ -70,6 +74,16 @@ public:
 
     using WrapObst::getPoints;
     Eigen::MatrixXf getPoints(int num_points);
+
+    Status get_status_u()
+    {
+        return status_U;
+    }
+
+    Status get_status_v()
+    {
+        return status_V;
+    }
 };
 
 #endif

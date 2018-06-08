@@ -8,6 +8,9 @@ void WrapSphere::compute()
     OP = OP / OP.norm();
     Eigen::Vector3f N = OP.cross(OS);
     N = N / N.norm();
+
+    if (N.dot(Eigen::Vector3f(0.0f, 0.0f, 1.0f)) < 0)
+        N = -N;
     
     this->M << OS.transpose(), N.cross(OS).transpose(), N.transpose();
     //std::cout << this->M << std::endl;
