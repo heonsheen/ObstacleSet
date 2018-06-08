@@ -19,6 +19,8 @@ void WrapCylinder::compute()
     double denom_t = s(0)*s(0) + s(1)*s(1);
     double R = this->radius;
 
+    this->status = wrap;
+
     if ((denom_q - R*R < 0.0f) || (denom_t - R*R < 0.0f))
     {
         this->status = inside_radius;
@@ -39,7 +41,7 @@ void WrapCylinder::compute()
         this->status = no_wrap;
     }
 
-    this->status = wrap;
+    
     
     std::complex<double> qt_i = 1.0f - 0.5f *
         ((q(0) - t(0)) * (q(0) - t(0))
@@ -100,6 +102,10 @@ Eigen::MatrixXf WrapCylinder::getPoints(int num_points)
     for (double i = theta_s; i <= theta_e + 0.001; 
          i += (theta_e - theta_s) / num_points)
     {
+        if (col == num_points + 1) {
+            break;
+        }
+        
         Eigen::Vector3f point = this->M.transpose() *
             Eigen::Vector3f(this->radius * cos(i), this->radius * sin(i), z_i) +
             this->point_O;
