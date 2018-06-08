@@ -28,7 +28,7 @@ classdef WrapSphere
             obj.wrap_path_len = 0;
             obj.status = 0;
             obj = wrap_line(obj);
-            %display_points(obj);
+            display_points(obj);
         end
         
         function res = wrap_line(obj)
@@ -39,7 +39,12 @@ classdef WrapSphere
             vec_OP = vec_OP / norm(vec_OP);
             vec_N = cross(vec_OP, vec_OS);
             vec_N = vec_N / norm(vec_N);
-            mat_M = [transpose(vec_OS); 
+            
+            if (dot(vec_N, [0;0;1]) < 0)
+                vec_N = -vec_N;
+            end
+            
+            mat_M = [transpose(vec_OS);
                      transpose(cross(vec_N, vec_OS)); 
                      transpose(vec_N)];
             obj.mat = mat_M;
@@ -54,6 +59,7 @@ classdef WrapSphere
             
             denom_q = p_x^2 + p_y^2;
             denom_t = s_x^2 + s_y^2;
+            
             if (denom_q - R^2 < 0.0) || (denom_t - R^2 < 0.0)
                 %disp(denom_q - R^2);
                 %disp(denom_t - R^2);

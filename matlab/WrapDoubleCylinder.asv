@@ -88,8 +88,10 @@ classdef WrapDoubleCylinder
             
             if Rv* (h_x * t_y - h_y * t_x) > 0.0
                 obj.status_V = 0;
-                h_x = sv_x;
-                h_y = sv_y;
+                h_x = pv_x;
+                %t_x = pv_x;
+                h_y = pv_y;
+                %t_y = pv_y;
             end
             
             HT_xy = abs(Rv * acos(1.0 - ...
@@ -141,12 +143,6 @@ classdef WrapDoubleCylinder
                 g_x = (hu_x*Ru^2 - Ru*hu_y*root_G) / denom_g;
                 g_y = (hu_y*Ru^2 + Ru*hu_x*root_G) / denom_g;
                 
-                if Ru * (q_x * g_y - q_y * g_x) > 0.0
-                    obj.status_U = 0;
-                    g_x = pu_x;
-                    g_y = pu_y;
-                end
-                
                 disp([q_x q_y 0]);
                 disp([g_x g_y 0]);
 
@@ -179,12 +175,6 @@ classdef WrapDoubleCylinder
                 h_x = (gv_x*Rv^2 + Rv*gv_y*root_H) / denom_h;
                 h_y = (gv_y*Rv^2 - Rv*gv_x*root_H) / denom_h;
 
-                if Rv * (h_x * t_y - h_y * t_x) > 0.0
-                    obj.status_V = 0;
-                    h_x = sv_x;
-                    h_y = sv_y;
-                end
-                
                 HT_xy = abs(Rv * acos(1.0 - ...
                         0.5 * ((h_x-t_x)^2 + (h_y-t_y)^2) / Rv^2));  
                 GH_xy = abs(Rv * acos(1.0 - ...
@@ -212,14 +202,6 @@ classdef WrapDoubleCylinder
                     break;
                 end
                 point_H0 = obj.point_H;
-            end
-            
-            if obj.status_V == 0
-                obj.point_T = obj.point_S;
-            end
-            
-            if obj.status_U == 0
-                obj.point_Q = obj.point_P;
             end
             
             disp(obj.point_Q);
