@@ -21,7 +21,9 @@ void WrapSphere::compute()
     double denom_q = p(0)*p(0) + p(1)*p(1);
     double denom_t = s(0)*s(0) + s(1)*s(1);
     double R = this->radius;
-    
+
+    this->status = wrap;
+
     if ((denom_q - R*R < 0.0f) || (denom_t - R*R < 0.0f))
     {
         this->status = inside_radius;
@@ -43,7 +45,7 @@ void WrapSphere::compute()
         this->status = no_wrap;
     }
 
-    this->status = wrap;
+    
     this->point_q = q;
     this->point_t = t;
 
@@ -91,6 +93,10 @@ Eigen::MatrixXf WrapSphere::getPoints(int num_points)
     for (double i = theta_s; i <= theta_e + 0.001; 
          i += (theta_e - theta_s) / num_points)
     {
+        if (col == num_points + 1) {
+            break;
+        }
+        
         Eigen::Vector3f point = this->radius * this->M.transpose() *
             Eigen::Vector3f(cos(i), sin(i), 0.0f) + this->point_O;
         points.col(col++) = point;

@@ -108,6 +108,8 @@ void WrapDoubleCylinder::compute()
             status_U = no_wrap;
             g(0) = pu(0);
             g(1) = pu(1);
+        }else {
+            status_U = wrap;
         }
 
         std::complex<double> qg_i = 1.0f - 0.5f *
@@ -164,6 +166,8 @@ void WrapDoubleCylinder::compute()
             status_V = no_wrap;
             h(0) = sv(0);
             h(1) = sv(1);
+        }else {
+            status_V = wrap;
         }
 
         H = this->M_V.transpose() * h + this->point_V;
@@ -267,6 +271,10 @@ Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
         for (double i = theta_s; i <= theta_e + 0.001; 
              i += (theta_e - theta_s) / num_points)
         {
+            if (col == num_points + 1) {
+                break;  // During simulation, col sometimes is out of range and error occurs.
+            }
+
             Eigen::Vector3f point = this->M_U.transpose() *
                 Eigen::Vector3f(this->radius_U * cos(i), 
                                 this->radius_U * sin(i), z_i) +
@@ -314,15 +322,23 @@ Eigen::MatrixXf WrapDoubleCylinder::getPoints(int num_points)
 
         z_i = z_s;
         dz = (z_e - z_s) / num_points;
+
+        int flag = 0;
+        // I reverse the order of points, so it is h to t
         for (double i = theta_s; i <= theta_e + 0.001; 
              i += (theta_e - theta_s) / num_points)
         {
+            if (flag == num_points + 1) {
+                break; // in case it is out of range
+            }
+
             Eigen::Vector3f point = this->M_V.transpose() *
                 Eigen::Vector3f(this->radius_V * cos(i), 
                                 this->radius_V * sin(i), z_i) +
                 this->point_V;
             z_i += dz;
-            points.col(col++) = point;
+            points.col(col--) = point;
+            flag++;
         }
     }
     else
